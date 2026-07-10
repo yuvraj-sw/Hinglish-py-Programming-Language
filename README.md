@@ -2,7 +2,7 @@
 
 An interactive, browser-based development environment and source-to-source transpiler that compiles Hinglish source code into standard, clean Python logic in real-time. Powered by WebAssembly, it executes full Python programs directly within the client browser sandbox—no backend cloud server required.
 
-🌐 **Live Demo:** [https://yuvraj-sw.github.io/hinglish-py/](https://yuvraj-sw.github.io/hinglish-py/)
+🌐 **Live Demo:** https://yuvraj-sw.github.io/Hinglish-py-Programming-Language/
 
 ---
 
