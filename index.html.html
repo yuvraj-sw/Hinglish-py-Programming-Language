@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HinglishPy — apni bhasha mein code karo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000000;
+    --bg-2:#000000;
+    --panel:#0c0c0c;
+    --panel-2:#161616;
+    --chalk:#ffffff;
+    --chalk-dim:#7d7d7d;
+    --marigold:#e8a33d;
+    --marigold-dim:#c98a2c;
+    --rani:#ff5f5f;
+    --teal:#7fb69e;
+    --rule:rgba(255,255,255,0.12);
+    --card:#e9e2c9;
+    --card-ink:#2a2110;
+    --radius:10px;
+    /* syntax token colors */
+    --syn-control:#ff5470;
+    --syn-def:#b892ff;
+    --syn-io:#56d8ff;
+    --syn-literal:#ffa94d;
+    --syn-string:#ff7edb;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(255,255,255,0.06), transparent 40%),
+      radial-gradient(ellipse at 90% 0%, rgba(255,255,255,0.05), transparent 35%),
+      var(--bg);
+    color:var(--chalk);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px;}
+
+  /* header */
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:22px;}
+  .brand-eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--marigold);margin:0 0 6px;}
+  h1{margin:0;font-size:clamp(30px,5vw,46px);font-weight:700;color:var(--chalk);position:relative;display:inline-block;line-height:1.05;}
+  h1 svg{position:absolute;left:0;bottom:-10px;width:100%;height:14px;}
+  .tagline{margin:14px 0 0;color:var(--chalk-dim);font-size:15px;max-width:440px;line-height:1.55;}
+
+  /* cheat sheet card - signature element */
+  .cheat{
+    background:var(--card);
+    color:var(--card-ink);
+    border-radius:2px;
+    padding:16px 18px 18px;
+    width:270px;
+    transform:rotate(1.4deg);
+    box-shadow:0 14px 26px rgba(0,0,0,0.35), 0 2px 0 rgba(0,0,0,0.15);
+    position:relative;
+    font-family:'JetBrains Mono',monospace;
+    flex-shrink:0;
+  }
+  .cheat::before{
+    content:'';
+    position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-8deg);
+    width:22px;height:22px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f3c66b, var(--marigold-dim));
+    box-shadow:0 3px 6px rgba(0,0,0,0.4);
+  }
+  .cheat h2{margin:2px 0 10px;font-family:'Space Grotesk',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px dashed rgba(42,33,16,0.35);padding-bottom:8px;}
+  .cheat table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .cheat td{padding:3px 0;vertical-align:top;}
+  .cheat td.hi{color:#7a4a12;font-weight:600;white-space:nowrap;padding-right:10px;}
+  .cheat td.py{color:#3a3220;}
+  .cheat .arrow{color:#9b8656;padding:0 6px;}
+
+  /* toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+  select, button{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13.5px;
+    border-radius:7px;
+    border:1px solid var(--rule);
+    padding:9px 14px;
+    cursor:pointer;
+    background:var(--panel);
+    color:var(--chalk);
+  }
+  select{padding-right:8px;}
+  button.run{
+    background:var(--marigold);
+    color:#241705;
+    font-weight:600;
+    border:none;
+    display:flex;align-items:center;gap:8px;
+    box-shadow:0 4px 14px rgba(232,163,61,0.25);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  button.run:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 18px rgba(232,163,61,0.35);}
+  button.run:disabled{opacity:.55;cursor:wait;}
+  button.ghost:hover{background:var(--panel-2);}
+  .status{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--chalk-dim);margin-left:auto;}
+  .status.ready{color:var(--teal);}
+  .status.err{color:var(--rani);}
+
+  /* editor grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:820px){.grid{grid-template-columns:1fr;}}
+
+  .pane{background:var(--panel);border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
+  .pane-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--rule);font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--chalk-dim);}
+  .dot-row span{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;}
+  .d1{background:#d1554a}.d2{background:#e8a33d}.d3{background:#7fb69e}
+
+  .code-body{display:flex;height:360px;}
+  .gutter{
+    font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:21px;color:rgba(255,255,255,0.28);
+    padding:14px 8px 14px 14px;text-align:right;user-select:none;white-space:pre;overflow:hidden;
+  }
+  .editor-wrap{position:relative;flex:1;overflow:hidden;}
+  .highlight-layer, textarea{
+    position:absolute;inset:0;margin:0;box-sizing:border-box;
+    font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:21px;
+    padding:14px 14px 14px 6px;white-space:pre;overflow:auto;border:none;
+  }
+  .highlight-layer{color:var(--chalk);pointer-events:none;background:transparent;z-index:1;}
+  textarea{
+    background:transparent;color:transparent;caret-color:var(--chalk);
+    outline:none;resize:none;z-index:2;
+  }
+  textarea::selection{background:rgba(255,255,255,0.25);color:transparent;}
+  .py-out{
+    flex:1;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:21px;
+    color:var(--chalk);padding:14px 14px 14px 6px;white-space:pre-wrap;overflow:auto;
+  }
+
+  .console{margin-top:16px;background:var(--bg-2);border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;}
+  .console-head{padding:9px 14px;border-bottom:1px solid var(--rule);font-family:'JetBrains Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--chalk-dim);}
+  .console-body{font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:22px;padding:14px;min-height:110px;max-height:260px;overflow:auto;white-space:pre-wrap;color:var(--teal);}
+  .console-body .err{color:var(--rani);}
+  .console-body .muted{color:var(--chalk-dim);}
+
+  footer{margin-top:26px;color:var(--chalk-dim);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:center;}
+
+  /* ---- splash screen ---- */
+  #splash{
+    position:fixed;inset:0;z-index:9999;
+    background:#000;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    transition:opacity .6s ease;
+  }
+  #splash.hide{opacity:0;pointer-events:none;}
+  .splash-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(28px,6vw,52px);
+    font-weight:700;
+    color:var(--chalk);
+    opacity:0;
+    letter-spacing:.02em;
+    animation:splashIn 2.4s ease forwards;
+  }
+  .splash-name .accent{color:var(--marigold);}
+  .splash-sub{
+    margin-top:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--chalk-dim);
+    opacity:0;
+    animation:splashSubIn 2.4s ease forwards;
+    animation-delay:.3s;
+  }
+  .splash-rule{
+    width:0;height:2px;background:var(--marigold);margin:16px auto 0;
+    animation:splashRule 1s ease forwards;
+    animation-delay:.5s;
+  }
+  @keyframes splashIn{
+    0%{opacity:0;transform:translateY(14px) scale(.97);filter:blur(4px);}
+    40%{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+    85%{opacity:1;}
+    100%{opacity:1;}
+  }
+  @keyframes splashSubIn{
+    0%{opacity:0;transform:translateY(6px);}
+    40%{opacity:1;transform:translateY(0);}
+    100%{opacity:1;}
+  }
+  @keyframes splashRule{
+    0%{width:0;}
+    50%{width:140px;}
+    100%{width:140px;}
+  }
+  #appRoot{opacity:0;transition:opacity .7s ease;}
+  #appRoot.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-name">Made by <span class="accent">Yuvraj</span></div>
+  <div class="splash-rule"></div>
+  <div class="splash-sub">HinglishPy loading…</div>
+</div>
+
+<div id="appRoot">
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="brand-eyebrow">ghar ki bhasha, python ki taakat</p>
+      <h1>HinglishPy
+        <svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M2 9 C 40 2, 80 13, 120 6 S 180 2, 198 8" fill="none" stroke="#e8a33d" stroke-width="3" stroke-linecap="round"/></svg>
+      </h1>
+      <p class="tagline">Hinglish mein likho — <em>agar</em>, <em>warna</em>, <em>jabtak</em>, <em>chaap</em> — neeche turant Python ban jayega, aur seedha browser mein chalega. Koi server nahi, sab kuch yahin.</p>
+    </div>
+    <div class="cheat">
+      <h2>Shabd-kosh · keywords</h2>
+      <table id="cheatTable"></table>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <select id="examples">
+      <option value="">— example uthao —</option>
+      <option value="fizzbuzz">FizzBuzz</option>
+      <option value="greet">Function: namaste</option>
+      <option value="loop">Jabtak loop</option>
+      <option value="tryexcept">Koshish / Pakdo</option>
+    </select>
+    <button class="ghost" id="clearBtn" type="button">Saaf karo</button>
+    <button class="run" id="runBtn" type="button" disabled>
+      <span id="runLabel">Python load ho raha hai…</span>
+    </button>
+    <span class="status" id="status">engine boot ho raha hai…</span>
+  </div>
+
+  <div class="grid">
+    <div class="pane">
+      <div class="pane-head">
+        <span class="dot-row"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span></span>
+        <span>Hinglish.hpy</span>
+      </div>
+      <div class="code-body">
+        <div class="gutter" id="gutterIn">1</div>
+        <div class="editor-wrap">
+          <pre class="highlight-layer" id="highlightIn" aria-hidden="true"></pre>
+          <textarea id="editor" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="pane">
+      <div class="pane-head">
+        <span>asli Python</span>
+        <span>read-only</span>
+      </div>
+      <div class="code-body">
+        <div class="gutter" id="gutterOut">1</div>
+        <div class="py-out" id="pyOut"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="console">
+    <div class="console-head">output</div>
+    <div class="console-body" id="consoleBody"><span class="muted">Run dabao aur output yahan dikhega.</span></div>
+  </div>
+
+  <footer>banaya gaya Hinglish → Python transpiler ke saath · Pyodide (WASM Python) browser mein chalata hai</footer>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+// ---------- keyword map ----------
+const KEYWORDS = [
+  ['agar','if'], ['warna_agar','elif'], ['warna','else'],
+  ['jabtak','while'], ['ke_liye','for'], ['mein','in'],
+  ['kaam','def'], ['wapas','return'],
+  ['chaap','print'],
+  ['sahi','True'], ['galat','False'], ['khaali','None'],
+  ['aur','and'], ['ya','or'], ['nahi','not'],
+  ['todo','break'], ['jaari','continue'],
+  ['koshish','try'], ['pakdo','except'], ['akhir','finally'],
+  ['uthao','raise'], ['mangao','import'], ['naam_se','as'],
+  ['varg','class'], ['khud','self'], ['pass_karo','pass']
+];
+const KMAP = Object.fromEntries(KEYWORDS);
+
+// category -> css color, and word -> category (covers both Hinglish and Python spellings)
+const CAT_COLOR = {
+  control: 'var(--syn-control)',
+  def: 'var(--syn-def)',
+  io: 'var(--syn-io)',
+  literal: 'var(--syn-literal)'
+};
+const WORD_CATEGORY = {
+  // control flow
+  agar:'control', warna_agar:'control', warna:'control', jabtak:'control', ke_liye:'control', mein:'control',
+  todo:'control', jaari:'control', koshish:'control', pakdo:'control', akhir:'control', uthao:'control',
+  aur:'control', ya:'control', nahi:'control',
+  'if':'control', 'elif':'control', 'else':'control', 'while':'control', 'for':'control', 'in':'control',
+  'break':'control', 'continue':'control', 'try':'control', 'except':'control', 'finally':'control', 'raise':'control',
+  'and':'control', 'or':'control', 'not':'control',
+  // def / structure
+  kaam:'def', wapas:'def', varg:'def', khud:'def', mangao:'def', naam_se:'def', pass_karo:'def',
+  'def':'def', 'return':'def', 'class':'def', 'self':'def', 'import':'def', 'as':'def', 'pass':'def',
+  // io
+  chaap:'io', 'print':'io',
+  // literals
+  sahi:'literal', galat:'literal', khaali:'literal',
+  'True':'literal', 'False':'literal', 'None':'literal'
+};
+
+const HL_TOKEN_RE = /(#.*$)|('(?:\\.|[^'\\])*')|("(?:\\.|[^"\\])*")|\b[A-Za-z_][A-Za-z0-9_]*\b/gm;
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function highlight(src){
+  return src.replace(HL_TOKEN_RE, (match, comment, sq, dq) => {
+    if (comment !== undefined) return `<span style="color:var(--chalk-dim)">${escapeHtml(match)}</span>`;
+    if (sq !== undefined || dq !== undefined) return `<span style="color:var(--syn-string)">${escapeHtml(match)}</span>`;
+    const cat = WORD_CATEGORY[match];
+    if (cat) return `<span style="color:${CAT_COLOR[cat]}">${escapeHtml(match)}</span>`;
+    return escapeHtml(match);
+  });
+}
+
+function renderCheatSheet(){
+  const t = document.getElementById('cheatTable');
+  t.innerHTML = KEYWORDS.map(([h,p]) =>
+    `<tr><td class="hi">${h}</td><td class="arrow">→</td><td class="py">${p}</td></tr>`
+  ).join('');
+}
+renderCheatSheet();
+
+// tokenizer-aware replace: skip strings & comments
+const TOKEN_RE = /(#.*$)|('(?:\\.|[^'\\])*')|("(?:\\.|[^"\\])*")|\b[A-Za-z_][A-Za-z0-9_]*\b/gm;
+
+function transpile(src){
+  return src.replace(TOKEN_RE, (match, comment, sq, dq) => {
+    if (comment !== undefined || sq !== undefined || dq !== undefined) return match;
+    return KMAP.hasOwnProperty(match) ? KMAP[match] : match;
+  });
+}
+
+// ---------- examples ----------
+const EXAMPLES = {
+  fizzbuzz:
+`ke_liye x mein range(1, 16):
+    agar x % 15 == 0:
+        chaap("FizzBuzz")
+    warna_agar x % 3 == 0:
+        chaap("Fizz")
+    warna_agar x % 5 == 0:
+        chaap("Buzz")
+    warna:
+        chaap(x)`,
+  greet:
+`kaam namaste(naam):
+    wapas "Namaste, " + naam + "!"
+
+chaap(namaste("Yuvraj"))
+chaap(namaste("Duniya"))`,
+  loop:
+`ginti = 1
+jabtak sahi:
+    chaap("ginti:", ginti)
+    ginti = ginti + 1
+    agar ginti > 5:
+        todo`,
+  tryexcept:
+`ankiye = ["10", "20", "das"]
+
+ke_liye a mein ankiye:
+    koshish:
+        chaap(a, "->", int(a) * 2)
+    pakdo ValueError:
+        chaap(a, "ek number nahi hai!")`
+};
+
+// ---------- editor wiring ----------
+const editor = document.getElementById('editor');
+const pyOut = document.getElementById('pyOut');
+const highlightIn = document.getElementById('highlightIn');
+const gutterIn = document.getElementById('gutterIn');
+const gutterOut = document.getElementById('gutterOut');
+const consoleBody = document.getElementById('consoleBody');
+const runBtn = document.getElementById('runBtn');
+const runLabel = document.getElementById('runLabel');
+const statusEl = document.getElementById('status');
+const examplesSel = document.getElementById('examples');
+
+function updateGutters(text){
+  const n = text.split('\n').length;
+  const nums = Array.from({length:n}, (_,i)=>i+1).join('\n');
+  gutterIn.textContent = nums;
+  gutterOut.textContent = nums;
+}
+
+function refresh(){
+  const src = editor.value;
+  const py = transpile(src);
+  highlightIn.innerHTML = highlight(src) + '\n';
+  pyOut.innerHTML = highlight(py);
+  updateGutters(src);
+}
+
+editor.addEventListener('input', refresh);
+editor.addEventListener('scroll', () => {
+  gutterIn.scrollTop = editor.scrollTop;
+  highlightIn.scrollTop = editor.scrollTop;
+  highlightIn.scrollLeft = editor.scrollLeft;
+});
+
+editor.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab'){
+    e.preventDefault();
+    const start = editor.selectionStart, end = editor.selectionEnd;
+    editor.value = editor.value.slice(0,start) + '    ' + editor.value.slice(end);
+    editor.selectionStart = editor.selectionEnd = start + 4;
+    refresh();
+  }
+});
+
+examplesSel.addEventListener('change', () => {
+  const key = examplesSel.value;
+  if (key && EXAMPLES[key]){
+    editor.value = EXAMPLES[key];
+    refresh();
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  editor.value = '';
+  refresh();
+  consoleBody.innerHTML = '<span class="muted">Run dabao aur output yahan dikhega.</span>';
+});
+
+// ---------- pyodide ----------
+let pyodideReady = null;
+
+async function bootPyodide(){
+  try{
+    const pyodide = await loadPyodide();
+    pyodide.setStdout({ batched: (msg) => appendConsole(msg, false) });
+    pyodide.setStderr({ batched: (msg) => appendConsole(msg, true) });
+    pyodideReady = pyodide;
+    statusEl.textContent = 'engine taiyaar hai';
+    statusEl.classList.add('ready');
+    runBtn.disabled = false;
+    runLabel.textContent = 'Run karo ▶';
+  }catch(err){
+    statusEl.textContent = 'engine load nahi hua';
+    statusEl.classList.add('err');
+    runLabel.textContent = 'Load fail';
+  }
+}
+bootPyodide();
+
+function appendConsole(text, isErr){
+  const span = document.createElement('span');
+  if (isErr) span.className = 'err';
+  span.textContent = text + '\n';
+  consoleBody.appendChild(span);
+  consoleBody.scrollTop = consoleBody.scrollHeight;
+}
+
+async function runCode(){
+  if (!pyodideReady) return;
+  consoleBody.innerHTML = '';
+  runBtn.disabled = true;
+  runLabel.textContent = 'chal raha hai…';
+  const pyCode = transpile(editor.value);
+  try{
+    await pyodideReady.runPythonAsync(pyCode);
+  }catch(err){
+    appendConsole(String(err.message || err), true);
+  }finally{
+    runBtn.disabled = false;
+    runLabel.textContent = 'Run karo ▶';
+  }
+}
+runBtn.addEventListener('click', runCode);
+
+// ---------- init ----------
+editor.value = EXAMPLES.fizzbuzz;
+refresh();
+
+// ---------- splash screen timing ----------
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('hide');
+    document.getElementById('appRoot').classList.add('show');
+    setTimeout(() => document.getElementById('splash').remove(), 700);
+  }, 3000);
+});
+</script>
+</body>
+</html>
